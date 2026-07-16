@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visual Trigger Studio — See Something, Do Something</title>
+  <meta name="description" content="Upload reference photos, define what happens when a match is seen (show an image, play a video, or pull live data like weather), and run it all in your browser — no hardware, no server, no account." />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <h1>📷 Visual Trigger Studio</h1>
+      <p>
+        See something → do something. Upload one or more reference photos, choose what should
+        happen when the camera (or an uploaded photo) matches — show an image, play a video, or
+        fetch live data like the current weather — no dedicated hardware, no server, no account.
+        Everything runs locally in this browser tab.
+      </p>
+      <div class="badges">
+        <span class="badge">100% client-side</span>
+        <span class="badge">No API keys</span>
+        <span class="badge">No install</span>
+        <span class="badge">MIT licensed</span>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button id="tab-btn-setup" class="active" data-tab="setup">⚙️ Setup</button>
+      <button id="tab-btn-recognize" data-tab="recognize">🔍 Recognize</button>
+      <button id="tab-btn-about" data-tab="about">ℹ️ How it works</button>
+    </nav>
+
+    <div id="global-status" class="status-line"></div>
+
+    <!-- ============================= SETUP TAB ============================= -->
+    <section id="tab-setup" class="tab-content active">
+      <div class="panel">
+        <h2>Your triggers</h2>
+        <p class="muted">
+          A "trigger" is one or more reference photos of something you care about, plus the action
+          to run when a new photo/frame looks similar enough to it.
+        </p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button id="btn-new-trigger" class="primary">+ Add trigger</button>
+          <button id="btn-export" class="secondary">⬇ Export JSON</button>
+          <button id="btn-import" class="secondary">⬆ Import JSON</button>
+          <input type="file" id="import-file-input" accept="application/json" class="hidden" />
+        </div>
+
+        <div id="trigger-list" class="trigger-grid"></div>
+        <div id="trigger-empty-state" class="empty-state hidden">
+          No triggers yet. Click <strong>"+ Add trigger"</strong> to upload your first reference
+          photo and decide what should happen when it's recognized.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= RECOGNIZE TAB ============================= -->
+    <section id="tab-recognize" class="tab-content">
+      <div class="panel">
+        <h2>Recognize</h2>
+        <p class="muted">Upload a photo or use your camera, then check it against your saved triggers.</p>
+
+        <div class="recognize-source">
+          <button id="src-btn-upload" class="secondary active">📁 Upload photo</button>
+          <button id="src-btn-camera" class="secondary">🎥 Use camera</button>
+        </div>
+
+        <div id="source-upload">
+          <input type="file" id="recognize-file-input" accept="image/*" />
+          <div><img id="upload-preview" class="hidden" alt="preview" /></div>
+        </div>
+
+        <div id="source-camera" class="hidden">
+          <video id="camera-preview" autoplay playsinline muted></video>
+          <div style="margin-top:10px; display:flex; gap:10px;">
+            <button id="btn-camera-start" class="secondary">Start camera</button>
+            <button id="btn-camera-snapshot" class="secondary" disabled>📸 Snapshot</button>
+            <button id="btn-camera-stop" class="secondary" disabled>Stop camera</button>
+          </div>
+          <canvas id="camera-canvas" class="hidden"></canvas>
+        </div>
+
+        <div style="margin-top:16px;">
+          <button id="btn-check" class="primary" disabled>🔎 Check now</button>
+        </div>
+
+        <div id="recognize-result"></div>
+      </div>
+    </section>
+
+    <!-- ============================= ABOUT TAB ============================= -->
+    <section id="tab-about" class="tab-content">
+      <div class="panel">
+        <h2>How it works</h2>
+        <ol>
+          <li>Every photo (your reference photos, and whatever you check later) is converted into a
+            numeric "fingerprint" (an embedding) by a CLIP vision model running entirely inside your
+            browser via WebAssembly — nothing is uploaded anywhere.</li>
+          <li>When you hit <em>Check now</em>, the new photo's fingerprint is compared to every saved
+            trigger's fingerprint using cosine similarity. The closest match above its threshold wins.</li>
+          <li>The matched trigger's action runs: show an image, play a video, or fetch a live value
+            (currently: weather) from a free public API and display it.</li>
+        </ol>
+        <h3>Honest limitations</h3>
+        <ul>
+          <li>CLIP is very good at recognizing <em>concepts</em> ("a photo of a bridge"), but it is
+            noticeably weaker than a purpose-trained model at telling apart two specific, similar-looking
+            objects under different lighting or angles. Upload 2-3 reference photos per trigger, from
+            different angles, to improve reliability — and don't treat a single high-confidence match as
+            infallible.</li>
+          <li>Triggers are stored in this browser's local storage only. They are <strong>not</strong>
+            synced to any account or server, and clearing browsing data removes them. Use Export/Import
+            to back them up or move them to another device.</li>
+          <li>The "weather" action reports live conditions for the <strong>named location</strong> from a
+            public weather API — it is not a physical sensor reading at the exact spot the camera is
+            pointed at. This project intentionally has no hardware dependency at all.</li>
+          <li>Uploaded videos are stored as base64 inside local storage, which browsers typically cap at
+            5-10MB per site. For anything larger, use a direct video URL instead of uploading the file.</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      Built by <strong>Ahmed Darwish</strong> ·
+      <a href="mailto:eahmeddarwish@gmail.com">eahmeddarwish@gmail.com</a> ·
+      <a href="https://github.com/eahmeddarwish" target="_blank" rel="noopener">GitHub</a> ·
+      MIT License
+    </footer>
+  </div>
+
+  <!-- ============================= TRIGGER FORM MODAL ============================= -->
+  <div id="trigger-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2 id="trigger-modal-title">Add trigger</h2>
+      <form id="trigger-form">
+        <div class="field">
+          <label for="f-name">Name</label>
+          <input type="text" id="f-name" placeholder="e.g. Front door, Company logo, Weather station icon" required />
+        </div>
+
+        <div class="field">
+          <label for="f-ref-images">Reference photo(s) — you can select multiple</label>
+          <input type="file" id="f-ref-images" accept="image/*" multiple />
+          <div id="f-ref-preview" class="ref-preview-list"></div>
+        </div>
+
+        <div class="field">
+          <label for="f-action-type">When recognized, do this:</label>
+          <select id="f-action-type">
+            <option value="image">Show an image</option>
+            <option value="video">Play a video</option>
+            <option value="weather">Fetch live weather for a location</option>
+            <option value="text">Show a text message</option>
+          </select>
+        </div>
+
+        <div id="f-action-image" class="action-fields">
+          <div class="field">
+            <label for="f-image-file">Upload image (or leave empty and paste a URL below)</label>
+            <input type="file" id="f-image-file" accept="image/*" />
+          </div>
+          <div class="field">
+            <label for="f-image-url">...or image URL</label>
+            <input type="url" id="f-image-url" placeholder="https://..." />
+          </div>
+        </div>
+
+        <div id="f-action-video" class="action-fields hidden">
+          <div class="field">
+            <label for="f-video-file">Upload a small video (kept under ~3MB is safest)</label>
+            <input type="file" id="f-video-file" accept="video/*" />
+          </div>
+          <div class="field">
+            <label for="f-video-url">...or a direct video URL (recommended for larger files)</label>
+            <input type="url" id="f-video-url" placeholder="https://... .mp4" />
+          </div>
+        </div>
+
+        <div id="f-action-weather" class="action-fields hidden">
+          <div class="field">
+            <label for="f-weather-location">Location name</label>
+            <input type="text" id="f-weather-location" placeholder="e.g. Kuwait City, Cairo, London" />
+          </div>
+        </div>
+
+        <div id="f-action-text" class="action-fields hidden">
+          <div class="field">
+            <label for="f-text-message">Message to display</label>
+            <textarea id="f-text-message" rows="3" placeholder="Any text you want shown on match"></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-threshold">Match sensitivity (similarity threshold)</label>
+          <div class="range-row">
+            <input type="range" id="f-threshold" min="0.5" max="0.95" step="0.01" value="0.75" />
+            <output id="f-threshold-output">0.75</output>
+          </div>
+          <p class="threshold-note">Lower = matches more easily (more false positives). Higher = stricter.</p>
+        </div>
+
+        <div id="trigger-form-status" class="status-line hidden"></div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+          <button type="button" id="btn-cancel-trigger" class="secondary">Cancel</button>
+          <button type="submit" id="btn-save-trigger" class="primary">Save trigger</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
