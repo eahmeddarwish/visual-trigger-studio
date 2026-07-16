@@ -14,7 +14,7 @@
 </div>
 
 <div align="center">
-  <img src="example.png" alt="Visual Trigger Example" width="600">
+  <img src="Visual-Trigger.png" alt="Visual Trigger Example">
 </div>
 ---
 
