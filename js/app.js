@@ -193,7 +193,7 @@ function openTriggerModal(trigger) {
   if (trigger) {
     editingTriggerId = trigger.id;
     $("f-name").value = trigger.name || "";
-    thresholdInput.value = trigger.threshold ?? 0.75;
+    thresholdInput.value = trigger.threshold ?? 0.82;
     thresholdOutput.textContent = thresholdInput.value;
     pendingRefImages = (trigger.refImages || []).map((r) => ({ ...r }));
     renderRefPreview();
@@ -450,7 +450,7 @@ async function renderRecognizeResult(best) {
   }
 
   const { trigger, score } = best;
-  const isMatch = score >= (trigger.threshold ?? 0.75);
+  const isMatch = score >= (trigger.threshold ?? 0.82);
   const pct = Math.max(0, Math.min(100, Math.round(score * 100)));
 
   const card = document.createElement("div");
@@ -458,7 +458,7 @@ async function renderRecognizeResult(best) {
   card.innerHTML = `
     <div><strong>${isMatch ? "✅ Match" : "⚠️ No confident match"}:</strong> closest trigger is "${trigger.name}"</div>
     <div class="score-bar-track"><div class="score-bar-fill" style="width:${pct}%"></div></div>
-    <div class="muted" style="font-size:0.85rem;">similarity ${pct}% (threshold ${Math.round((trigger.threshold ?? 0.75) * 100)}%)</div>
+    <div class="muted" style="font-size:0.85rem;">similarity ${pct}% (threshold ${Math.round((trigger.threshold ?? 0.82) * 100)}%)</div>
     <div class="action-output" id="action-output"></div>
   `;
   resultEl.innerHTML = "";

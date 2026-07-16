@@ -106,6 +106,14 @@ negotiate with a hosting provider, and no user photo ever touches a server.
   specific, similar-looking objects under different lighting/angles/backgrounds.
   Upload 2-3 reference photos per trigger from different angles, and treat a
   single high-confidence score as a strong signal — not an infallible proof.
+  **Measured in testing:** two simple synthetic shapes on a plain white
+  background (a red circle vs. an unrelated blue square) scored **0.86**
+  cosine similarity — high enough to false-positive against a lenient
+  threshold. Two photos of the same red circle scored **0.98**. That's why
+  the default threshold is set to a conservative **0.82**, not something
+  lower like 0.75 — real photos of distinct physical objects usually separate
+  more clearly than plain synthetic shapes do, but test your own threshold
+  with a couple of trial matches before relying on a trigger.
 - Triggers live in this browser's local storage only. They are **not** synced
   to any account, device, or server — clearing browsing data removes them. Use
   the Export/Import JSON buttons to back them up or move them elsewhere.

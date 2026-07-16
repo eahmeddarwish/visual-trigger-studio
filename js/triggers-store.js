@@ -58,7 +58,7 @@ export const TriggerStore = {
     const withId = {
       id: uid(),
       createdAt: Date.now(),
-      threshold: 0.75,
+      threshold: 0.82,
       ...trigger,
     };
     triggers.push(withId);

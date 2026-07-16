@@ -12,7 +12,15 @@
 // documented low-level building block, so it's less likely to shift under us.
 
 const TRANSFORMERS_VERSION = "4.2.0";
-const CDN_BASE = `https://cdn.jsdelivr.net/npm/@huggingface/transformers@${TRANSFORMERS_VERSION}`;
+// IMPORTANT: transformers.js's raw dist file (dist/transformers.web.js) contains
+// bare module specifiers (e.g. `import ... from "onnxruntime-web/webgpu"`) that
+// only resolve inside a bundler (webpack/vite). This is a buildless static site
+// with no bundler, so we import via jsDelivr's "+esm" endpoint instead: it
+// serves a pre-resolved ESM build with every bare import rewritten to a full
+// CDN URL, which is exactly what a plain `<script type="module">` needs.
+// Confirmed necessary by testing the raw dist path directly (it threw
+// "Failed to resolve module specifier 'onnxruntime-web/webgpu'" in-browser).
+const CDN_MODULE_URL = `https://cdn.jsdelivr.net/npm/@huggingface/transformers@${TRANSFORMERS_VERSION}/+esm`;
 const MODEL_ID = "Xenova/clip-vit-base-patch32";
 
 let modulePromise = null;
@@ -21,9 +29,7 @@ let visionModelPromise = null;
 
 function loadTransformersModule() {
   if (!modulePromise) {
-    // Dynamic import from a CDN URL — works in any modern browser with no
-    // build step, matching the rest of this project (plain static HTML/JS).
-    modulePromise = import(/* webpackIgnore: true */ `${CDN_BASE}/dist/transformers.web.js`);
+    modulePromise = import(/* webpackIgnore: true */ CDN_MODULE_URL);
   }
   return modulePromise;
 }
