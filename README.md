@@ -13,6 +13,9 @@
 
 </div>
 
+<div align="center">
+  <img src="esp32-thermal-camera.png" alt="ESP32 Thermal Camera Pro — live thermal heatmap" width="600">
+</div>
 ---
 
 ## 🌍 Overview | نظرة عامة
